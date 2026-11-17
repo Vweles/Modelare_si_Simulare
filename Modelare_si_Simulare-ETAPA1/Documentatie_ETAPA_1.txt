@@ -1,0 +1,522 @@
+Tema: Studiu privind o problema de interferenta a sistemelor
+
+Etapa 1: Identificarea repartitiei pentru variabilele aleatoare primare
+
+
+
+
+
+
+1. PREZENTAREA PROBLEMEI SI CONTEXTUL PRACTIC
+
+--------------------------------------------------------------------------------
+
+Acest proiect porneste de la o situatie clasica intalnita in productie si in
+
+organizarea activitatii de mentenanta (cunoscuta in literatura de specialitate
+
+sub numele de "Systems / Machines Interference Problem").
+
+
+
+Intr-o fabrica functioneaza in paralel un numar de S masini identice, toate
+
+fiind deservite de un singur muncitor de intretinere. Pe parcursul functionarii,
+
+fiecare masina se poate opri accidental din cauza a doua tipuri independente
+
+de defectiuni, asociate a doua module distincte, notate cu A si B. Cand apare
+
+oricare dintre aceste doua probleme, masina respectiva se opreste imediat si
+
+are nevoie de interventia muncitorului pentru a fi reparata si repusa in
+
+functiune.
+
+
+
+1.1. Ce este fenomenul de interferenta si de ce conteaza
+
+In functionarea unui astfel de sistem apar doua situatii complet diferite:
+
+
+
+  a) Cazul unei singure masini (S = 1, fara interferenta):
+
+     Atunci cand masina se defecteaza, muncitorul intervine imediat. Nu exista
+
+     timp de asteptare, iar masina are o disponibilitate maxima. Totusi, din
+
+     punct de vedere economic, solutia nu este eficienta deoarece muncitorul
+
+     sta degeaba cea mai mare parte a timpului.
+
+
+
+  b) Cazul mai multor masini (S > 1, cu interferenta):
+
+     Cand unui singur muncitor ii sunt alocate S masini, apare riscul ca o
+
+     masina sa se defecteze exact in momentul in care muncitorul repara deja o
+
+     alta masina. In aceasta situatie, masina defecta trebuie sa astepte la
+
+     coada pana cand muncitorul termina interventia curenta. Acest timp de
+
+     asteptare suplimentar se numeste "timp de interferenta a sistemelor".
+
+
+
+Astfel, scopul proiectului este sa analizeze echilibrul dintre doi indicatori
+
+de performanta care se influenteaza reciproc:
+
+  - Disponibilitatea sistemelor (D): procentul din timpul total in care
+
+    masinile functioneaza efectiv (ne dorim sa fie cat mai mare);
+
+  - Gradul de ocupare al muncitorului (rho): procentul din timpul total in
+
+    care muncitorul lucreaza efectiv la remedieri (trebuie sa fie suficient de
+
+    mare ca sa se justifice costul cu personalul, dar nu atat de mare incat sa
+
+    blocheze masinile in asteptare).
+
+
+
+1.2. Etapele proiectului
+
+Proiectul este impartit in mai multe etape logice, de la analiza datelor brute
+
+pana la simularea completa a fabricii:
+
+  - Etapa 1: Identificarea legii de repartitie si estimarea parametrilor
+
+    statistici pentru variabilele aleatoare primare, pornind de la 4 esantioane
+
+    de date masurate (E1, E2, E3, E4).
+
+  - Etapa 2: Realizarea unui simulator cu evenimente discrete in MATLAB pentru
+
+    a calcula disponibilitatea masinilor si gradul de ocupare al muncitorului
+
+    in functie de numarul S de masini din fabrica.
+
+  - Etapa 3: Extinderea simulatorului pentru a vedea cat de mult creste
+
+    disponibilitatea daca adaugam module de rezerva pentru A si/sau B.
+
+  - Etapa 4: Rezolvarea analitica a problemei pentru cateva cazuri mai simple,
+
+    folosind modele Markov, pentru a verifica daca simulatorul da rezultate
+
+    corecte.
+
+  - Etapa 5 (optional): Modelarea abstractizata a sistemului prin Retele Petri
+
+    si lanturi Markov.
+
+
+
+
+
+2. MODELUL STOHASTIC PRIMAR SI RELATIILE DE CALCUL
+
+--------------------------------------------------------------------------------
+
+Pentru a putea descrie matematic ce se intampla cu o masina, folosim patru
+
+variabile aleatoare continue si independente:
+
+
+
+  - TfA: timpul de functionare pana la aparitia unei defectiuni la modulul A;
+
+  - TfB: timpul de functionare pana la aparitia unei defectiuni la modulul B;
+
+  - TrA: timpul necesar pentru repararea modulului A;
+
+  - TrB: timpul necesar pentru repararea modulului B.
+
+
+
+Fiecare dintre aceste variabile este caracterizata printr-un parametru mediu:
+
+  - lambda_A si lambda_B: ratele medii de defectare pentru modulul A, respectiv
+
+    modulul B;
+
+  - mu_A si mu_B: intensitatile medii de remediere pentru modulul A, respectiv
+
+    modulul B.
+
+
+
+Daca privim o singura masina izolata (S = 1), ea poate trece prin trei stari:
+
+"Functionare", "Remediere (A)" si "Remediere (B)". Din starea de functionare,
+
+masina trece in remediere A cu rata lambda_A sau in remediere B cu rata
+
+lambda_B, iar dupa reparatie revine in functionare cu intensitatea mu_A,
+
+respectiv mu_B.
+
+
+
+In acest caz simplu (fara interferenta), disponibilitatea teoretica a masinii
+
+se calculeaza direct cu formula:
+
+
+
+  D = (1 / (1 + (lambda_A / mu_A) + (lambda_B / mu_B))) * 100%
+
+
+
+
+
+3. CUM AM REZOLVAT ETAPA 1 (METODOLOGIA PAS CU PAS)
+
+--------------------------------------------------------------------------------
+
+Inainte de a construi simulatorul din Etapa 2, trebuie sa stim cum sa generam
+
+durate realiste de functionare si reparatie. Pentru asta, in Etapa 1 am
+
+analizat cele 4 esantioane de date experimentale primite (E1 pentru TfA, E2
+
+pentru TfB, E3 pentru TrA si E4 pentru TrB), fiecare avand cate N = 300 de
+
+valori masurate.
+
+
+
+Pentru fiecare esantion in parte am urmat 6 pasi:
+
+
+
+Pasul 1 — Sortarea datelor si calculul mediei:
+
+Am ordonat valorile crescator si am calculat media aritmetica (ma). Uitandu-ne
+
+la valori, se observa ca foarte multe sunt mici (aproape de 0) si doar cateva
+
+sunt foarte mari. Aceasta forma asimetrica ne arata ca datele urmeaza o
+
+repartitie exponential-negativa.
+
+
+
+Pasul 2 — Impartirea pe subintervale:
+
+Am ales un interval de analiza [0, v] care sa cuprinda intre 98% si 100% din
+
+date si l-am impartit in k = 12 subintervale egale, fiecare avand latimea
+
+Delta = v / k. Capatul din dreapta al fiecarui subinterval i este x_i = i * Delta
+
+(pentru i de la 1 la 12). Apoi am numarat cate valori (n_i) din esantion cad
+
+in fiecare subinterval.
+
+
+
+Pasul 3 — O prima estimare a parametrului (lambda_0):
+
+La o repartitie exponential-negativa de parametru lambda, stim din teorie ca
+
+media este 1 / lambda, iar peste 99% din valori se afla in intervalul
+
+[0, 5 / lambda]. De aceea, am luat ca punct de plecare:
+
+
+
+  lambda_0 = 1 / ma,   pe intervalul de analiza [0, 5 / lambda_0]
+
+
+
+Pasul 4 — Densitatea empirica si prima verificare grafica:
+
+In mijlocul fiecarui subinterval, y_i = x_i - (Delta / 2), am calculat
+
+densitatea empirica (din datele masurate) cu relatia:
+
+
+
+  fe(y_i) = n_i / (N * Delta)
+
+
+
+Am pus aceste puncte pe grafic impreuna cu curba teoretica
+
+f(lambda_0, x) = lambda_0 * exp(-lambda_0 * x). Faptul ca punctele urmaresc
+
+forma curbei ne-a confirmat ca ipoteza repartitiei exponential-negative este
+
+corecta.
+
+
+
+Pasul 5 — Cautarea celei mai bune valori (lambda_F):
+
+Deoarece lambda_0 este doar o aproximare initiala, am cautat o valoare mai
+
+precisa in jurul lui, in intervalul [st, dr] = [0.5 * lambda_0, 1.5 * lambda_0],
+
+impartit in 1000 de pasi fini. Pentru fiecare valoare candidata lambda, am
+
+recalculat punctele empirice pe intervalul [0, 5 / lambda] si am masurat
+
+eroarea fata de curba teoretica folosind suma patratelor diferentelor:
+
+
+
+  Fc(lambda) = suma pentru i=1..k din (f(lambda, y_i) - fe(y_i))^2
+
+
+
+Valoarea care a dat cea mai mica eroare a fost pastrata ca parametru final
+
+lambda_F, verificand ca ea sa se afle strict in interiorul intervalului de
+
+cautare (st < lambda_F < dr).
+
+
+
+Pasul 6 — Verificarea grafica finala:
+
+Am trasat pe un grafic separat curba teoretica pentru lambda_F impreuna cu
+
+noile puncte empirice pe intervalul [0, 5 / lambda_F], confirmand ca
+
+aproximarea s-a imbunatatit.
+
+
+
+
+
+4. CUM FUNCTIONEAZA CODUL MATLAB
+
+--------------------------------------------------------------------------------
+
+Scriptul scris in MATLAB automatizeaza toate aceste calcule pentru cei patru
+
+vectori (E1, E2, E3, E4) si afiseaza atat rezultatele in consola, cat si o
+
+fereastra cu 8 grafice comparative.
+
+
+
+Pe scurt, codul este structurat in patru parti clare:
+
+
+
+1. Pregatirea datelor si a ferestrei grafice:
+
+   - Se definesc vectorii E1, E2, E3, E4 (fiecare cu N = 300 de elemente) si
+
+     se fixeaza numarul de subintervale k = 12.
+
+   - Se deschide o figura impartita in 4 linii si 2 coloane (subplot(4, 2, ...)),
+
+     cate o linie pentru fiecare variabila (TfA, TfB, TrA, TrB).
+
+
+
+2. Calculul pentru estimarea initiala (lambda_0):
+
+   - Vectorul se sorteaza cu sort(E) si se face media cu mean(E).
+
+   - Se calculeaza lam0 = 1 / ma, capatul intervalului v0 = 5 / lam0 si pasul
+
+     D0 = v0 / k.
+
+   - Pentru a desena curba teoretica continua, se genereaza 1001 puncte intre
+
+     0 si v0 (vectorul z0) si se aplica formula f0 = lam0 * exp(-lam0 * z0).
+
+   - Printr-o bucla for i = 1:N, fiecare valoare din esantion este plasata in
+
+     subintervalul ei folosind indexul j = ceil(E(i) / D0), incrementand
+
+     vectorul de frecvente n0(j).
+
+   - Se calculeaza mijloacele subintervalelor y0 = x0 - D0 / 2 si densitatea
+
+     empirica fe0 = n0 / (N * D0).
+
+
+
+3. Bucla de optimizare pentru gasirea lui lambda_F:
+
+   - Se stabilesc marginile cautarii: st = 0.5 * lam0 si dr = 1.5 * lam0, cu
+
+     pasul pc = (dr - st) / 1000.
+
+   - Se initializeaza minimul erorii Spdm = 1e9 (o valoare foarte mare).
+
+   - In bucla for lam = st:pc:dr, la fiecare pas se redimensioneaza intervalul
+
+     la [0, 5 / lam], se recalculeaza frecventele n, densitatea empirica fe si
+
+     densitatea teoretica f = lam * exp(-lam * y).
+
+   - Se calculeaza eroarea spd = sum((f - fe).^2). Ori de cate ori gasim o
+
+     eroare mai mica decat minimul curent (spd < Spdm), actualizam Spdm si
+
+     retinem noua valoare optima in lamF.
+
+
+
+4. Afisarea graficelor si a rezultatelor:
+
+   - Pentru fiecare esantion se deseneaza doua grafice separate: in stanga
+
+     situatia initiala cu lambda_0 (curba rosie, puncte albastre), iar in
+
+     dreapta situatia finala cu lambda_F (curba neagra, stelute rosii).
+
+   - Observatie importanta: Nu am suprapus cele doua curbe pe acelasi grafic
+
+     deoarece intervalul de analiza [0, 5 / lambda] se modifica odata cu
+
+     lambda. Din cauza acestei scalari, curba teoretica arata mereu la fel, iar
+
+     ceea ce urmarim noi este cat de aproape cad punctele empirice de ea.
+
+   - La final, functia fprintf afiseaza curat in consola toate valorile
+
+     intermediare si parametrii finali.
+
+
+
+
+
+5. REZULTATELE OBTINUTE PENTRU CELE 4 ESANTIOANE
+
+--------------------------------------------------------------------------------
+
+Dupa rularea codului in MATLAB pentru toate cele patru esantioane (N = 300,
+
+k = 12), am obtinut urmatoarele rezultate:
+
+
+
+5.1. Analiza preliminara pe intervalul [0, 5 / lambda_0]
+
+
+
+  Variabila | Esantion | Minim  | Maxim   | Media (ma) | v0 = 5/lam0 | Valori in [0, v0]
+
+  ----------|----------|--------|---------|------------|-------------|------------------
+
+  TfA       | E1       | 0.0143 | 19.9859 | 3.7507     | 18.7537     | 297 / 300 (99.0%)
+
+  TfB       | E2       | 0.0149 | 50.5628 | 5.6792     | 28.3962     | 295 / 300 (98.3%)
+
+  TrA       | E3       | 0.0001 | 1.9685  | 0.3134     | 1.5672      | 299 / 300 (99.7%)
+
+  TrB       | E4       | 0.0007 | 1.7510  | 0.3011     | 1.5054      | 299 / 300 (99.7%)
+
+
+
+Numarul de valori cazute in fiecare dintre cele 12 subintervale este:
+
+  - E1 (TfA): n = [102  65  48  36  10  12  13   4   2   4   0   1]
+
+  - E2 (TfB): n = [120  59  43  23  14  12  12   2   3   2   2   3]
+
+  - E3 (TrA): n = [108  59  49  29  16  11   9   6   4   5   1   2]
+
+  - E4 (TrB): n = [107  56  43  42  18  11  10   4   1   2   2   3]
+
+
+
+Se vede clar cum valorile scad treptat de la primul subinterval spre ultimul
+
+si ca peste 98% din date intra in intervalul ales, ceea ce confirma repartitia
+
+exponential-negativa.
+
+
+
+5.2. Parametrii optimizati si eroarea finala
+
+
+
+  Variabila | Parametru | lam_0  | Interval cautare [st, dr] | lam_F (final) | Eroare Fc(lam_F)
+
+  ----------|-----------|--------|---------------------------|---------------|-----------------
+
+  TfA       | lambda_A  | 0.2666 | [0.1333, 0.3999]          | 0.2797        | 0.000477
+
+  TfB       | lambda_B  | 0.1761 | [0.0880, 0.2641]          | 0.2067        | 0.000160
+
+  TrA       | mu_A      | 3.1904 | [1.5952, 4.7855]          | 3.4775        | 0.049196
+
+  TrB       | mu_B      | 3.3214 | [1.6607, 4.9822]          | 3.4510        | 0.101369
+
+
+
+5.3. Disponibilitatea teoretica de referinta (pentru S = 1)
+
+Folosind parametrii gasiti la aceasta etapa, putem calcula deja cat este
+
+disponibilitatea unei singure masini atunci cand nu exista interferenta:
+
+
+
+  D = (1 / (1 + (0.2797 / 3.4775) + (0.2067 / 3.4510))) * 100%
+
+  D = (1 / (1 + 0.0804 + 0.0599)) * 100% = 87.69%
+
+
+
+Aceasta valoare ne va fi foarte utila in Etapa 2: cand vom rula simulatorul
+
+pentru S = 1, rezultatul simulat va trebui sa fie foarte apropiat de 87.69%.
+
+
+
+
+
+6. CONCLUZII DE ETAPA
+
+--------------------------------------------------------------------------------
+
+1. Prelucrarea statistica a celor patru esantioane (E1, E2, E3, E4) a aratat ca
+
+   toate cele patru variabile primare (TfA, TfB, TrA si TrB) urmeaza o lege de
+
+   distributie exponential-negativa de forma F(x) = 1 - exp(-lambda * x).
+
+2. Algoritmul de cautare a minimului sumei patratelor diferentelor a gasit o
+
+   solutie optima in interiorul intervalului [st, dr] pentru fiecare variabila
+
+   (st < lambda_F < dr), imbunatatind estimarea initiala.
+
+3. Valorile finale ale parametrilor adoptati (cu patru zecimale) sunt:
+
+
+
+     lambda_A = 0.2797
+
+     lambda_B = 0.2067
+
+     mu_A     = 3.4775
+
+     mu_B     = 3.4510
+
+
+
+4. Acesti parametri reprezinta datele de intrare pentru Etapa 2, unde vom
+
+   construi programul de simulare a functionarii celor S masini deservite de
+
+   un singur muncitor.
+
+================================================================================
